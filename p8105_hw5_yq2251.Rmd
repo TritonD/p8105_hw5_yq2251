@@ -1,0 +1,78 @@
+---
+title: "p8105_hw5_yq2251"
+author: "TritonD"
+date: "11/5/2019"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(stringr)
+library(readxl)
+```
+
+
+## question 1
+```{r}
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
+```
+
+
+```{r}
+no_missing=function(x){
+  if(is.numeric(x))   
+    {x[is.na(x)]=mean(x,na.rm=TRUE)}
+  else if (!is.numeric(x))
+    {x[is.na(x)]="virginica"}
+  
+  x}
+```
+
+output with the function
+```{r}
+output=map_dfr(iris_with_missing,no_missing)
+```
+
+
+## question 2
+
+```{r}
+allfiles=list.files(path="./data")%>%
+  substr(1,6)
+```
+
+```{r}
+df= tibble(allfiles = list.files(path="./data"),
+    path = str_c("./data/", allfiles))%>%
+  mutate(obs_time = map(path, read_csv),)%>%
+  unnest()%>%
+  
+  select(-path)%>%
+  mutate(arm = substr(allfiles, 1, 3),
+         arm = recode(arm, "con" = "Control", "exp" = "Experiment"),
+    subject_id=substr(allfiles,5,6),
+    subject_id=as.numeric(subject_id))%>%
+  
+  pivot_longer(week_1:week_8,
+    names_to = "week",
+    values_to = "obs" )%>%
+  
+  mutate(week=substr(week, 6,7), week=as.numeric(week))%>%
+  select(-allfiles)
+```
+
+## making spaghetti plot
+```{r}
+df%>%
+  ggplot(aes(x = week, y = obs, color=subject_id,group= subject_id)）+
+  geom_line() +facet_grid(. ~arm) +
+   labs(title = "Observations on individual subjects",
+    x = "week",
+    y = "observations"
+  ) 
+```
