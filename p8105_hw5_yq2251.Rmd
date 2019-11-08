@@ -78,3 +78,70 @@ df%>%
 ```
 
 In the experiment group, as time goes, there is a visible increasing trend in individual subjects. The control group is more stable without much difference.
+
+
+## question 3 regression model
+```{r}
+sim_regression = function(n=30, sigma=50, beta0 = 2, beta1 = 0) {
+  
+  sim_data = tibble(
+    xi1 = rnorm(n, mean = 0, sd = 1),
+    yi = beta0 + beta1 * xi1 + rnorm(n, 0, sigma)
+  )
+  
+  ls_fit = lm(yi ~ xi1, data = sim_data)
+  
+  tibble(
+    p_value = broom::tidy(ls_fit)$p.value[2],
+    beta1_hat = broom::tidy(ls_fit)$estimate[2],
+    alpha=0.05
+  )
+}
+```
+
+
+# Generate 10000 datasets
+```{r}
+sim_results_1 = 
+  rerun(10000, sim_regression(30, 2, 0)) %>% 
+  bind_rows()
+```
+
+# make a list for 6 beta1
+```{r}
+beta1s=list("beta1_1"=1,"beta1_2"=2,"beta1_3"=3, "beta1_4"=4,"beta1_5"=5,"beta1_6"=6)
+output = vector("list", 6)
+
+for (i in 1:6) {
+  output[[i]] = rerun(10000, sim_regression(beta1s[[i]])) %>% 
+    bind_rows
+}
+```
+
+```{r}
+sim_results_2 = 
+  tibble(beta1 = c(1,2,3,4,5,6)) %>% 
+  mutate(
+    output_lists = map(.x = beta1, ~rerun(10000, sim_regression(beta1 = .x))),
+    estimate_dfs = map(output_lists, bind_rows)) %>% 
+  select(-output_lists) %>% 
+  unnest(estimate_dfs)
+```
+
+```{r}
+  sim_results_2%>%
+  group_by(beta1)%>%
+  mutate(
+    power_test=sum(p_value<0.05)/10000
+    ) %>% 
+  ungroup()%>%
+  ggplot(aes(x = beta1, y = power_test, color=beta1)) + 
+  geom_point()+geom_line()+
+  labs(
+    title = "Association between Effect size and Power in regression",
+    x = "effect size",
+    y = "power"
+  ) 
+```
+```
+
