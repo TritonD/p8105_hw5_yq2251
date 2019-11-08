@@ -6,14 +6,14 @@ output: github_document
 ---
 
 ```{r}
-library(tidyverse)
-library(tidyr)
-library(stringr)
 library(readxl)
+library(tidyverse)
+library(stringr)
+library(tidyr)
 ```
 
 
-## question 1
+## question 1 Writing function
 ```{r}
 set.seed(10)
 
@@ -39,7 +39,7 @@ output=map_dfr(iris_with_missing,no_missing)
 ```
 
 
-## question 2
+## question 2 create  tidy dataframe
 
 ```{r}
 allfiles=list.files(path="./data")%>%
@@ -76,3 +76,5 @@ df%>%
     y = "observations"
   ) 
 ```
+
+In the experiment group, as time goes, there is a visible increasing trend in individual subjects. The control group is more stable without much difference.
