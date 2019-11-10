@@ -128,20 +128,57 @@ sim_results2 =
   unnest(estimate_dfs)
 ```
 
+# Effect size and power
 ```{r}
-  sim_results2%>%
+sim_results2%>%
+  filter(p_value<0.05)%>%
   group_by(beta1)%>%
-  mutate(
-    power_test=sum(p_value<0.05)/10000
-    ) %>% 
-  ungroup()%>%
+  summarise(num_power=n())%>%
+  mutate(power_test=num_power/10000)%>%
   ggplot(aes(x = beta1, y = power_test, color=beta1)) + 
   geom_point()+geom_line()+
   labs(
-    title = "Association between Effect size and Power in regression",
-    x = "effect size",
-    y = "power"
+    title = "Association between Effect Size and Power",
+    x = "Effect Size",
+    y = "Power"
   ) 
 ```
+
+This graphs shows the association between effect size and power. We can see from the graph that as effect size increases, power also increases.
+
+
+# estimated beta1 and true beta1
+```{r}
+sim_results2%>%
+  group_by(beta1)%>%
+  mutate(
+    average_beta1=mean(beta1_hat)
+    ) %>% 
+  ggplot(aes(x = beta1, y = average_beta1, color=beta1)) + 
+  geom_point()+geom_line()+
+  labs(
+    title = "Association between Average estimate of beta1 hat and true beta1",
+    x = "True beta1",
+    y = "Average estimate of beta1 hat"
+  )
 ```
+
+```{r}
+sim_results2%>%
+  group_by(beta1)%>%
+  filter(p_value<0.05)%>%
+  mutate(
+    avg_beta1_reject=mean(beta1_hat)
+    ) %>% 
+  ggplot(aes(x = beta1, y = avg_beta1_reject, color=beta1)) + 
+  geom_point()+geom_line()+
+  labs(
+    title = "Association between average estimate of beta1 (null rejected) & true beta1",
+    x = "True beta1",
+    y = "Average estimate of beta1 hat (null rejected)"
+  )
+```
+
+When the null is rejected, estimate of beta1 is not the same as true value of beta1. The average estimated beta1 is bigger than true beta1. 
+When the null hypothesis is accepted, beta1 is 0. Since only samples with rejected null included (those with alpha less than 0.05), the beta1s with values around 0 are not included in data analysis. Thus the average of the estimated beta1s would be bigger without beta1s =0.
 
